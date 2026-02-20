@@ -1142,7 +1142,7 @@ with gr.Blocks(title="Mizuki CM") as demo:
             dimg = gr.File(label="插入图片", file_count="multiple", file_types=["image"])
             
             with gr.Row():
-                d_save = gr.Button("保存")
+                d_save = gr.Button("保存修改")
                 d_create = gr.Button("创建")
                 d_delete = gr.Button("删除选中的日记", variant="stop")
             d_msg = gr.Label(label="状态")
@@ -1155,22 +1155,23 @@ with gr.Blocks(title="Mizuki CM") as demo:
 
         with gr.TabItem("Friends"):
             fr = gr.Button("刷新")
-            fs = gr.Dropdown(label="选择")
             f_data = gr.State()
             f_tail = gr.State()
-            
-            fid = gr.Number(label="ID", interactive=False)
-            ft = gr.Textbox(label="Title")
-            fi = gr.Textbox(label="Img")
-            fd = gr.Textbox(label="Desc")
-            fu = gr.Textbox(label="URL")
-            ftags = gr.Textbox(label="Tags")
-            
+
             with gr.Row():
-                f_save = gr.Button("保存")
-                f_create = gr.Button("创建")
-                f_delete = gr.Button("删除选中的友情链接", variant="stop")
-            f_msg = gr.Label()
+                with gr.Column():
+                    fid = gr.Number(label="ID", interactive=False)
+                    ft = gr.Textbox(label="标题")
+                    fi = gr.Textbox(label="图片(URL)")
+                    fd = gr.Textbox(label="描述")
+                    fu = gr.Textbox(label="链接")
+                    ftags = gr.Textbox(label="Tags", placeholder="tag1, tag2...")
+                with gr.Column():
+                    fs = gr.Dropdown(label="选择友链")
+                    f_save = gr.Button("保存修改")
+                    f_create = gr.Button("创建")
+                    f_delete = gr.Button("删除选中的友情链接", variant="stop")
+                    f_msg = gr.Label()
             
             fr.click(load_friends_ui, [root_input], [fs, f_data, f_tail])
             fs.change(select_friend, [fs, f_data], [fid, ft, fi, fd, fu, ftags])
@@ -1180,30 +1181,30 @@ with gr.Blocks(title="Mizuki CM") as demo:
 
         with gr.TabItem("Projects"):
             pr = gr.Button("刷新")
-            ps = gr.Dropdown(label="选择已有项目")
             p_data = gr.State()
             p_tail = gr.State()
-            
-            pid = gr.Textbox(label="ID")
-            pt = gr.Textbox(label="项目标题")
-            pcat = gr.Dropdown([("网页应用", "web"), ("移动应用", "mobile"), ("桌面应用", "desktop"), ("其它", "other")], label="项目类别")
-            pstat = gr.Dropdown([("已完成", "completed"), ("进行中", "in-progress"), ("已计划", "planned")], label="项目状态")
-            pdesc = gr.Textbox(label="项目描述")
-            pimg = gr.Textbox(label="项目封面")
-            pstack = gr.Textbox(label="技术栈")
-            ptags = gr.Textbox(label="标签")
-            pdemo = gr.Textbox(label="Demo网址")
-            pcode = gr.Textbox(label="源码网址")
-            pvisit = gr.Textbox(label="项目主页网址")
-            pstart = gr.Textbox(label="开始日期",placeholder="YYYY-MM-DD")
-            pend = gr.Textbox(label="结束日期", placeholder="YYYY-MM-DD")
-            pfeat = gr.Checkbox(label="是否置顶")
-            
             with gr.Row():
-                p_save = gr.Button("保存")
-                p_create = gr.Button("创建")
-                p_delete = gr.Button("删除选中的项目", variant="stop")
-            p_msg = gr.Label()
+                with gr.Column():
+                    pid = gr.Textbox(label="ID")
+                    pt = gr.Textbox(label="项目标题")
+                    pcat = gr.Dropdown([("网页应用", "web"), ("移动应用", "mobile"), ("桌面应用", "desktop"), ("其它", "other")], label="项目类别")
+                    pstat = gr.Dropdown([("已完成", "completed"), ("进行中", "in-progress"), ("已计划", "planned")], label="项目状态")
+                    pdesc = gr.Textbox(label="项目描述")
+                    pimg = gr.Textbox(label="项目封面")
+                    pstack = gr.Textbox(label="技术栈")
+                    ptags = gr.Textbox(label="标签")
+                    pdemo = gr.Textbox(label="Demo网址")
+                    pcode = gr.Textbox(label="源码网址")
+                    pvisit = gr.Textbox(label="项目主页网址")
+                    pstart = gr.Textbox(label="开始日期",placeholder="YYYY-MM-DD")
+                    pend = gr.Textbox(label="结束日期", placeholder="YYYY-MM-DD 选填")
+                    pfeat = gr.Checkbox(label="是否置顶")
+                with gr.Column():
+                    ps = gr.Dropdown(label="选择已有项目")
+                    p_save = gr.Button("保存修改")
+                    p_create = gr.Button("创建")
+                    p_delete = gr.Button("删除选中的项目", variant="stop")
+                    p_msg = gr.Label(label="状态")
             
             pr.click(load_projects_ui, [root_input], [ps, p_data, p_tail])
             ps.change(select_project, [ps, p_data], [pid, pt, pdesc, pimg, pcat, pstack, pstat, pdemo, pcode, pstart, pend, pfeat, ptags, pvisit])
@@ -1228,7 +1229,7 @@ with gr.Blocks(title="Mizuki CM") as demo:
                     dl = gr.Textbox(label="链接")
                 with gr.Column():
                     devs = gr.Dropdown(label="选择")
-                    dev_save = gr.Button("保存")
+                    dev_save = gr.Button("保存修改")
                     dev_create = gr.Button("创建")
                     dev_delete = gr.Button("删除选中的设备", variant="stop")
                     dev_msg = gr.Label(label="状态")

@@ -1,0 +1,5 @@
+gradio==6.6.0
+json5==0.13.0
+matplotlib==3.10.8
+Pillow==12.1.1
+python_frontmatter==1.1.0

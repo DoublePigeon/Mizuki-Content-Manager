@@ -261,26 +261,40 @@ def load_diary_ui(root):
                 
     return gr.Dropdown(choices=choices, value=None), data, tail
 
-def select_diary(val, data):
-    if not val or not data: return (None, "", "", "", "")
+def select_diary(root, val, data):
+    if not val or not data: return (None, "", "", "", "", [])
     try:
         did = int(val.split(' - ')[0])
         item = next((x for x in data if x['id'] == did), None)
-        if not item: return (None, "", "", "", "")
+        imgs = item.get('images', [])
+        public_path = os.path.join(root, "public")
+        img_paths = []
+        if len(imgs) > 0:
+            for img in imgs:
+                path_splits = img.split("/")
+                img_path = public_path
+                for path_split in path_splits:
+                    img_path = os.path.join(img_path, path_split)
+                img_paths.append(img_path)
+        if not item: return (None, "", "", "", "", [])
         return (
             item['id'],
             item.get('content', ''),
             item.get('mood', ''),
             item.get('location', ''),
             ",".join(item.get('tags', [])),
+            img_paths
         )
-    except: return (None, "", "", "", "")
+    except: return (None, "", "", "", "", [])
 
 def save_diary_entry(root, data, tail, d_id, content, mood, loc, tags, imgs: list):
     if not data: data = []
     target = next((x for x in data if x['id'] == d_id), None)
     diary_pic_path = get_path(root, "public", "images", "diary")
     img_paths = []
+    if len(target["images"]) > 0:
+        for path in target["images"]:
+            img_paths.append(path)
     if imgs:
         for img in imgs:
             img_name, suffix = os.path.split(os.path.basename(img.name))
@@ -352,7 +366,7 @@ def delete_selected_diary(root, data, tail, d_id):
         return "未找到要删除的日记", gr.update(), gr.update(), gr.update()
     write_ts_data(root, "diary.ts", "diaryData", data, "diary", tail)
     u = load_diary_ui(root)
-    return "删除了ID为{d_id}的日记", u[0], u[1], u[2]
+    return f"删除了ID为{d_id}的日记", u[0], u[1], u[2]
     
 # --- Friends ---
 def load_friends_ui(root):
@@ -748,13 +762,22 @@ def load_devices_ui(root):
                 flat_map[label] = (cat, idx)
     return gr.Dropdown(choices=choices, value=None), data, tail, flat_map
 
-def select_device(val, data, flat_map):
-    empty = ("", "", "", "", "", "")
-    if not val or not flat_map: return empty
+def select_device(root, val, data, flat_map):
+    empty = ("", "", "", "", "", "", [])
+    if not val or not flat_map:
+        return empty
+    public_path = get_path(root, "public")
+
     try:
         cat, idx = flat_map[val]
         item = data[cat][idx]
-        return cat, item['name'], item['image'], item['specs'], item['description'], item['link']
+        img = item["image"]
+        if img:
+            img_splits = img.split("/")
+            img_path = public_path
+            for img_split in img_splits:
+                img_path = os.path.join(img_path, img_split)
+        return cat, item['name'], item['image'], item['specs'], item['description'], item['link'], [img_path]
     except: return empty
 
 def save_device_btn(root, data, tail, old_cat, name, img: gr.File, specs, desc, link, new_cat_input, original_img, is_new):
@@ -1139,7 +1162,9 @@ with gr.Blocks(title="Mizuki CM") as demo:
                     dm = gr.Textbox(label="心情")
                     dl = gr.Textbox(label="地点")
                     dt = gr.Textbox(label="标签", placeholder="tag1, tag2...")
-            dimg = gr.File(label="插入图片", file_count="multiple", file_types=["image"])
+            with gr.Row():
+                dimg = gr.File(label="插入图片", file_count="multiple", file_types=["image"], scale=1)
+                dgall = gr.Gallery(label="已有图片预览", scale=3, columns=2, object_fit="contain")
             
             with gr.Row():
                 d_save = gr.Button("保存修改")
@@ -1148,7 +1173,7 @@ with gr.Blocks(title="Mizuki CM") as demo:
             d_msg = gr.Label(label="状态")
             
             dr.click(load_diary_ui, [root_input], [ds, d_data, d_tail])
-            ds.change(select_diary, [ds, d_data], [did, dc, dm, dl, dt])
+            ds.change(select_diary, [root_input, ds, d_data], [did, dc, dm, dl, dt, dgall])
             d_save.click(save_diary_entry, [root_input, d_data, d_tail, did, dc, dm, dl, dt, dimg], [d_msg, ds, d_data, d_tail])
             d_create.click(create_diary_entry, [root_input, dc, dm, dl, dt, dimg], [d_msg, ds, d_data, d_tail])
             d_delete.click(delete_selected_diary, inputs=[root_input, d_data, d_tail, did], outputs=[d_msg, ds, d_data, d_tail])
@@ -1232,10 +1257,11 @@ with gr.Blocks(title="Mizuki CM") as demo:
                     dev_save = gr.Button("保存修改")
                     dev_create = gr.Button("创建")
                     dev_delete = gr.Button("删除选中的设备", variant="stop")
+                    dev_gall = gr.Gallery(label="已有图片预览")
                     dev_msg = gr.Label(label="状态")
             
             devr.click(load_devices_ui, [root_input], [devs, dev_data, dev_tail, dev_map])
-            devs.change(select_device, [devs, dev_data, dev_map], [dcat, dn, dev_img, dsp, dd, dl])
+            devs.change(select_device, [root_input, devs, dev_data, dev_map], [dcat, dn, dev_img, dsp, dd, dl, dev_gall])
             dev_save.click(lambda *a: save_device_btn(*a, False), [root_input, dev_data, dev_tail, dcat, dn, di, dsp, dd, dl, dnewcat, dev_img], [dev_msg, devs, dev_data, dev_tail, dev_map])
             dev_create.click(lambda *a: save_device_btn(*a, True), [root_input, dev_data, dev_tail, dcat, dn, di, dsp, dd, dl, dnewcat, dev_img], [dev_msg, devs, dev_data, dev_tail, dev_map])
             dev_delete.click(delete_selected_device, inputs=[root_input, dev_data, dev_tail, dn, dcat], outputs=[dev_msg, devs, dev_data, dev_tail, dev_map])
@@ -1268,7 +1294,7 @@ with gr.Blocks(title="Mizuki CM") as demo:
                     adel_img = gr.Button("删除选中的图片", variant="stop")
                 with gr.Column():
                     adel_img_prev = gr.Gallery(label="选中的将要删除的图片")
-            agall = gr.Gallery(label="图片总览")
+            agall = gr.Gallery(label="图片总览", columns=3, object_fit="contain")
             
             adel_sel.change(fn=load_selected_img, inputs=[root_input, asl, adel_sel], outputs=[adel_img_prev])
             ar.click(load_albums_ui, [root_input], [asl, agall])

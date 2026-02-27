@@ -288,6 +288,7 @@ def select_diary(root, val, data):
     except: return (None, "", "", "", "", [])
 
 def save_diary_entry(root, data, tail, d_id, content, mood, loc, tags, imgs: list):
+    tags = replace_unicode_comma(tags)
     if not data: data = []
     target = next((x for x in data if x['id'] == d_id), None)
     diary_pic_path = get_path(root, "public", "images", "diary")
@@ -326,6 +327,7 @@ def save_diary_entry(root, data, tail, d_id, content, mood, loc, tags, imgs: lis
         return "未选中有效的日记"
 
 def create_diary_entry(root, content, mood, loc, tags, imgs):
+    tags = replace_unicode_comma(tags)
     data, tail = parse_ts_data(root, "diary.ts", "diaryData")
     if not data: data = []
     new_id = max([x['id'] for x in data], default=0) + 1
@@ -384,6 +386,7 @@ def select_friend(val, data):
     except: return (None, "", "", "", "", "")
 
 def save_friend_btn(root, data, tail, fid, title, img, desc, site, tags):
+    tags = replace_unicode_comma(tags)
     if not data: data = []
     item = next((x for x in data if x['id'] == fid), None)
     if item:
@@ -397,6 +400,7 @@ def save_friend_btn(root, data, tail, fid, title, img, desc, site, tags):
     return "Error", gr.Dropdown(), data, tail
 
 def create_friend_btn(root, title, img, desc, site, tags):
+    tags = replace_unicode_comma(tags)
     data, tail = parse_ts_data(root, "friends.ts", "friendsData")
     if not data: data = []
     new_id = max([x['id'] for x in data], default=0) + 1
@@ -771,14 +775,22 @@ def select_device(root, val, data, flat_map):
     try:
         cat, idx = flat_map[val]
         item = data[cat][idx]
-        img = item["image"]
+        img = item.get('image', '')
+        img_path = ""
+        img_list = []
         if img:
             img_splits = img.split("/")
             img_path = public_path
             for img_split in img_splits:
                 img_path = os.path.join(img_path, img_split)
-        return cat, item['name'], item['image'], item['specs'], item['description'], item['link'], [img_path]
-    except: return empty
+            img_list.append(img_path)
+        
+        outputs = (cat, item['name'], img, item['specs'], item['description'], item['link'], img_list)
+        print(f"Returning the following args to Device: {outputs}")
+        return outputs
+    except Exception as e:
+        print(f"Returning an empty output for: {e}") 
+        return empty
 
 def save_device_btn(root, data, tail, old_cat, name, img: gr.File, specs, desc, link, new_cat_input, original_img, is_new):
     if not data: data = {}
@@ -902,6 +914,7 @@ def create_album_func(root, dir_name, new_dirname, title, desc, date, loc, tags,
 {layout} -> layout\n\
 {cols} -> cols\n\
 ")
+    tags = replace_unicode_comma(tags)
     if not title: return "请填入相册标题", gr.Dropdown()
     dn = dir_name if dir_name else (new_dirname if new_dirname else title.replace(" ", "_").lower())
     base = get_path(root, "public", "images", "albums", dn)
@@ -1064,6 +1077,8 @@ def create_save_post(root, post_dir, title, pub, desc, tags, cat, author, perm, 
 {original_img} -> original_img\n\
 {is_new} -> is_new\n\
 ")
+    if tags:
+        tags = replace_unicode_comma(tags)
     if is_new:
         dn = perm if perm else title.replace(" ", "_").lower()
         full = get_path(root, "src", "content", "posts", dn)
@@ -1132,6 +1147,13 @@ def update_color(color_str: str):
         color_hex = colors.to_hex((r/255, g/255, b/255))
         return color_hex
 
+def replace_unicode_comma(input_str: str) -> str:
+    if "，" in input_str:
+        input_str = input_str.replace("，", ", ")
+        return input_str
+    else:
+        return input_str
+    
 # ====================
 # UI
 # ====================

@@ -269,7 +269,7 @@ def select_diary(root, val, data):
         imgs = item.get('images', [])
         public_path = os.path.join(root, "public")
         img_paths = []
-        if len(imgs) > 0:
+        if imgs and len(imgs) > 0:
             for img in imgs:
                 path_splits = img.split("/")
                 img_path = public_path
@@ -331,13 +331,14 @@ def create_diary_entry(root, content, mood, loc, tags, imgs):
     data, tail = parse_ts_data(root, "diary.ts", "diaryData")
     if not data: data = []
     new_id = max([x['id'] for x in data], default=0) + 1
-    if len(imgs) > 0:
+    img_paths = []
+    if imgs and len(imgs) > 0:
         img_paths = save_img_to_diary(root, imgs)
     new_item = {
         "id": new_id,
         "content": content,
         "date": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "images": img_paths if img_paths else [],
+        "images": img_paths,
         "location": loc,
         "mood": mood,
         "tags": [t.strip() for t in tags.split(',') if t.strip()]
